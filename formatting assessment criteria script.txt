@@ -40,7 +40,7 @@ Sub FormatAcceptanceCriteria()
             If curr <> "" Then groups.Add curr
             
             If groups.Count > 0 Then
-                out = "<p>" & vbLf
+                out = ""
                 Dim gIdx As Long
                 For gIdx = 1 To groups.Count
                     Dim grp As String
@@ -48,7 +48,7 @@ Sub FormatAcceptanceCriteria()
                     Dim glines() As String
                     glines = Split(grp, vbLf)
                     
-                    out = out & "<p>" & vbLf
+                    out = out & "<div>" & vbLf
                     Dim j As Long
                     For j = LBound(glines) To UBound(glines)
                         Dim lineTxt As String
@@ -74,9 +74,9 @@ Sub FormatAcceptanceCriteria()
                         End If
 NextLineInGroup:
                     Next j
-                    out = out & "</p>" & vbLf & vbLf
+                    out = out & "</div>" & vbLf & "<br>" & vbLf & vbLf
                 Next gIdx
-                out = out & "</p>"
+                ' no outer wrapper; groups are individual <div> blocks separated by <br>
                 
                 cell.Offset(0, outOffset).Value = out
             End If
