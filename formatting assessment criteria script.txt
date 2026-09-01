@@ -1,0 +1,94 @@
+' Paste into a Module in the VBA editor (Alt+F11 -> Insert -> Module)
+Option Explicit
+
+Sub FormatSelectionToACHtml()
+    Dim rng As Range, cell As Range
+    Dim raw As String, norm As String
+    Dim lines() As String, i As Long
+    Dim groups As Collection, curr As String
+    Dim out As String, outOffset As Long
+    
+    outOffset = 1 ' write output to column to the right; set 0 to overwrite originals
+    If TypeName(Selection) <> "Range" Then Exit Sub
+    Set rng = Selection.Columns(1).Cells
+    
+    For Each cell In rng
+        If Trim(CStr(cell.Value)) <> "" Then
+            raw = CStr(cell.Value)
+            norm = Replace(raw, vbCrLf, vbLf)
+            norm = Replace(norm, vbCr, vbLf)
+            lines = Split(norm, vbLf)
+            
+            Set groups = New Collection
+            curr = ""
+            For i = LBound(lines) To UBound(lines)
+                Dim t As String
+                t = Trim(lines(i))
+                If t <> "" Then
+                    If curr = "" Then
+                        curr = t
+                    Else
+                        curr = curr & vbLf & t
+                    End If
+                Else
+                    If curr <> "" Then
+                        groups.Add curr
+                        curr = ""
+                    End If
+                End If
+            Next i
+            If curr <> "" Then groups.Add curr
+            
+            If groups.Count > 0 Then
+                out = "<div>" & vbLf
+                Dim gIdx As Long
+                For gIdx = 1 To groups.Count
+                    Dim grp As String
+                    grp = groups(gIdx)
+                    Dim glines() As String
+                    glines = Split(grp, vbLf)
+                    
+                    Dim spanJoined As String
+                    spanJoined = ""
+                    
+                    Dim j As Long
+                    For j = LBound(glines) To UBound(glines)
+                        Dim lineTxt As String, span As String
+                        lineTxt = Trim(glines(j))
+                        If lineTxt <> "" Then
+                            If j = LBound(glines) Then
+                                Dim pos As Long
+                                pos = InStr(lineTxt, ":")
+                                If pos > 0 Then
+                                    Dim prefix As String, rest As String
+                                    prefix = Left(lineTxt, pos) ' includes colon
+                                    rest = Trim(Mid(lineTxt, pos + 1))
+                                    If rest <> "" Then
+                                        span = "<span><b>" & prefix & "</b> " & rest & "</span>"
+                                    Else
+                                        span = "<span><b>" & prefix & "</b></span>"
+                                    End If
+                                Else
+                                    span = "<span><b>" & lineTxt & "</b></span>"
+                                End If
+                            Else
+                                span = "<span><b>" & lineTxt & "</b></span>"
+                            End If
+                            
+                            If spanJoined = "" Then
+                                spanJoined = span
+                            Else
+                                spanJoined = spanJoined & vbLf & span
+                            End If
+                        End If
+                    Next j
+                    
+                    out = out & "<p>" & vbLf & spanJoined & vbLf & "</p>" & vbLf & vbLf
+                Next gIdx
+                out = out & "</div>"
+                
+                cell.Offset(0, outOffset).Value = out
+            End If
+        End If
+    Next cell
+End Sub

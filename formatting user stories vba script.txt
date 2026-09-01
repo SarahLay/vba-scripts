@@ -1,5 +1,5 @@
 ' Paste into a Module in the VBA editor (Alt+F11 -> Insert -> Module)
-Sub ConvertSelectionToHtmlSpans()
+Sub FormatUserStories()
     Dim rng As Range, cell As Range
     Dim lines() As String, i As Long
     Dim out As String, spans As Collection
@@ -29,14 +29,14 @@ Sub ConvertSelectionToHtmlSpans()
                         rest = ""
                     End If
                     If rest <> "" Then
-                        spans.Add "<span><b>" & pref & "</b> " & rest & "</span>"
+                        spans.Add "<div><b>" & pref & "</b> " & rest & "</div>"
                     Else
-                        spans.Add "<span><b>" & pref & "</b></span>"
+                        spans.Add "<div><b>" & pref & "</b></div>"
                     End If
                 End If
             Next i
             
-            ' Join spans with line breaks and wrap in <p>
+            ' Join spans with line breaks and wrap in <div>
             Dim j As Long, joined As String
             For j = 1 To spans.Count
                 If j = 1 Then
@@ -45,7 +45,7 @@ Sub ConvertSelectionToHtmlSpans()
                     joined = joined & vbLf & spans(j)
                 End If
             Next j
-            out = "<p>" & vbLf & joined & vbLf & "</p>"
+            out = "<div>" & vbLf & joined & vbLf & "</div>"
             
             cell.Offset(0, outOffset).Value = out
         End If
