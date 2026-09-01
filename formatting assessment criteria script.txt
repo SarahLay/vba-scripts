@@ -40,7 +40,7 @@ Sub FormatAcceptanceCriteria()
             If curr <> "" Then groups.Add curr
             
             If groups.Count > 0 Then
-                out = "<div>" & vbLf
+                out = "<p>" & vbLf
                 Dim gIdx As Long
                 For gIdx = 1 To groups.Count
                     Dim grp As String
@@ -48,7 +48,7 @@ Sub FormatAcceptanceCriteria()
                     Dim glines() As String
                     glines = Split(grp, vbLf)
                     
-                    out = out & "<div>" & vbLf
+                    out = out & "<p>" & vbLf
                     Dim j As Long
                     For j = LBound(glines) To UBound(glines)
                         Dim lineTxt As String
@@ -62,21 +62,21 @@ Sub FormatAcceptanceCriteria()
                                     prefix = Left(lineTxt, pos) ' includes colon
                                     rest = Trim(Mid(lineTxt, pos + 1))
                                     If rest <> "" Then
-                                        out = out & "<div><b>" & EscapeHtml(prefix) & "</b> " & EscapeHtml(rest) & "</div>" & vbLf
+                                        out = out & "<p><b>" & EscapeHtml(prefix) & "</b> " & EscapeHtml(rest) & "</p>" & vbLf
                                     Else
-                                        out = out & "<div><b>" & EscapeHtml(prefix) & "</b></div>" & vbLf
+                                        out = out & "<p><b>" & EscapeHtml(prefix) & "</b></p>" & vbLf
                                     End If
                                     GoTo NextLineInGroup
                                 End If
                             End If
                             ' Default: bold first word
-                            out = out & BoldFirstWordDiv(lineTxt) & vbLf
+                            out = out & BoldFirstWordP(lineTxt) & vbLf
                         End If
 NextLineInGroup:
                     Next j
-                    out = out & "</div>" & vbLf & vbLf
+                    out = out & "</p>" & vbLf & vbLf
                 Next gIdx
-                out = out & "</div>"
+                out = out & "</p>"
                 
                 cell.Offset(0, outOffset).Value = out
             End If
@@ -84,15 +84,13 @@ NextLineInGroup:
     Next cell
 End Sub
 
-Private Function BoldFirstWordDiv(ByVal txt As String) As String
+Private Function BoldFirstWordP(ByVal txt As String) As String
     Dim parts() As String
     parts = Split(txt, " ")
     If UBound(parts) >= 1 Then
-        Dim rest As String
-        rest = Join(Application.WorksheetFunction.Index(parts, 0, Evaluate("ROW(2:" & UBound(parts) + 1 & ")")), " ")
-        BoldFirstWordDiv = "<div><b>" & EscapeHtml(parts(0)) & "</b> " & EscapeHtml(Mid(txt, Len(parts(0)) + 2)) & "</div>"
+        BoldFirstWordP = "<p><b>" & EscapeHtml(parts(0)) & "</b> " & EscapeHtml(Mid(txt, Len(parts(0)) + 2)) & "</p>"
     Else
-        BoldFirstWordDiv = "<div><b>" & EscapeHtml(txt) & "</b></div>"
+        BoldFirstWordP = "<p><b>" & EscapeHtml(txt) & "</b></p>"
     End If
 End Function
 
