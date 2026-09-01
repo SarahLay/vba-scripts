@@ -1,0 +1,92 @@
+' Paste into a Module in the VBA editor (Alt+F11 -> Insert -> Module)
+Sub ConvertSelectionToHtmlSpans()
+    Dim rng As Range, cell As Range
+    Dim lines() As String, i As Long
+    Dim out As String, spans As Collection
+    Dim line As String, pref As String, rest As String
+    Dim outOffset As Long
+    
+    outOffset = 1 ' write output to column to the right; change if needed
+    If TypeName(Selection) <> "Range" Then Exit Sub
+    Set rng = Selection.Columns(1).Cells
+    
+    For Each cell In rng
+        If Trim(cell.Value & "") <> "" Then
+            ' Normalize line breaks and split
+            line = Replace(cell.Value, vbCrLf, vbLf)
+            line = Replace(line, vbCr, vbLf)
+            lines = Split(line, vbLf)
+            
+            Set spans = New Collection
+            For i = LBound(lines) To UBound(lines)
+                Dim txt As String
+                txt = Trim(lines(i))
+                If txt <> "" Then
+                    pref = ExtractPrefix(txt)
+                    If Len(pref) > 0 Then
+                        rest = Trim(Mid(txt, Len(pref) + 1))
+                    Else
+                        rest = ""
+                    End If
+                    If rest <> "" Then
+                        spans.Add "<span><b>" & pref & "</b> " & rest & "</span>"
+                    Else
+                        spans.Add "<span><b>" & pref & "</b></span>"
+                    End If
+                End If
+            Next i
+            
+            ' Join spans with line breaks and wrap in <p>
+            Dim j As Long, joined As String
+            For j = 1 To spans.Count
+                If j = 1 Then
+                    joined = spans(j)
+                Else
+                    joined = joined & vbLf & spans(j)
+                End If
+            Next j
+            out = "<p>" & vbLf & joined & vbLf & "</p>"
+            
+            cell.Offset(0, outOffset).Value = out
+        End If
+    Next cell
+End Sub
+
+' Returns the prefix to bold for known templates or defaults to first two words.
+Private Function ExtractPrefix(ByVal txt As String) As String
+    Dim lower As String
+    lower = LCase(txt)
+    
+    ' Known templates (checked longest-first)
+    If Left(lower, Len("so that i can")) = "so that i can" Then
+        ExtractPrefix = Trim(Left(txt, Len("So that I can")))
+        Exit Function
+    End If
+    If Left(lower, Len("so that")) = "so that" Then
+        ExtractPrefix = Trim(Left(txt, Len("So that")))
+        Exit Function
+    End If
+    If Left(lower, Len("i want to")) = "i want to" Then
+        ExtractPrefix = Trim(Left(txt, Len("I want to")))
+        Exit Function
+    End If
+    If Left(lower, Len("as an")) = "as an" Then
+        ExtractPrefix = Trim(Left(txt, Len("As an")))
+        Exit Function
+    End If
+    If Left(lower, Len("as a")) = "as a" Then
+        ExtractPrefix = Trim(Left(txt, Len("As a")))
+        Exit Function
+    End If
+    
+    ' Default: bold first two words (or one if only one word)
+    Dim parts() As String
+    parts = Split(txt, " ")
+    If UBound(parts) >= 1 Then
+        ExtractPrefix = parts(0) & " " & parts(1)
+    ElseIf UBound(parts) = 0 Then
+        ExtractPrefix = parts(0)
+    Else
+        ExtractPrefix = ""
+    End If
+End Function
