@@ -1,7 +1,7 @@
 ' Paste into a Module in the VBA editor (Alt+F11 -> Insert -> Module)
 Option Explicit
 
-Sub FormatSelectionToACHtml()
+Sub FormatAcceptanceCriteria()
     Dim rng As Range, cell As Range
     Dim raw As String, norm As String
     Dim lines() As String, i As Long
@@ -48,12 +48,10 @@ Sub FormatSelectionToACHtml()
                     Dim glines() As String
                     glines = Split(grp, vbLf)
                     
-                    Dim spanJoined As String
-                    spanJoined = ""
-                    
+                    out = out & "<div>" & vbLf
                     Dim j As Long
                     For j = LBound(glines) To UBound(glines)
-                        Dim lineTxt As String, span As String
+                        Dim lineTxt As String
                         lineTxt = Trim(glines(j))
                         If lineTxt <> "" Then
                             If j = LBound(glines) Then
@@ -64,26 +62,19 @@ Sub FormatSelectionToACHtml()
                                     prefix = Left(lineTxt, pos) ' includes colon
                                     rest = Trim(Mid(lineTxt, pos + 1))
                                     If rest <> "" Then
-                                        span = "<span><b>" & prefix & "</b> " & rest & "</span>"
+                                        out = out & "<div><b>" & EscapeHtml(prefix) & "</b> " & EscapeHtml(rest) & "</div>" & vbLf
                                     Else
-                                        span = "<span><b>" & prefix & "</b></span>"
+                                        out = out & "<div><b>" & EscapeHtml(prefix) & "</b></div>" & vbLf
                                     End If
-                                Else
-                                    span = "<span><b>" & lineTxt & "</b></span>"
+                                    GoTo NextLineInGroup
                                 End If
-                            Else
-                                span = "<span><b>" & lineTxt & "</b></span>"
                             End If
-                            
-                            If spanJoined = "" Then
-                                spanJoined = span
-                            Else
-                                spanJoined = spanJoined & vbLf & span
-                            End If
+                            ' Default: bold first word
+                            out = out & BoldFirstWordDiv(lineTxt) & vbLf
                         End If
+NextLineInGroup:
                     Next j
-                    
-                    out = out & "<p>" & vbLf & spanJoined & vbLf & "</p>" & vbLf & vbLf
+                    out = out & "</div>" & vbLf & vbLf
                 Next gIdx
                 out = out & "</div>"
                 
@@ -92,3 +83,23 @@ Sub FormatSelectionToACHtml()
         End If
     Next cell
 End Sub
+
+Private Function BoldFirstWordDiv(ByVal txt As String) As String
+    Dim parts() As String
+    parts = Split(txt, " ")
+    If UBound(parts) >= 1 Then
+        Dim rest As String
+        rest = Join(Application.WorksheetFunction.Index(parts, 0, Evaluate("ROW(2:" & UBound(parts) + 1 & ")")), " ")
+        BoldFirstWordDiv = "<div><b>" & EscapeHtml(parts(0)) & "</b> " & EscapeHtml(Mid(txt, Len(parts(0)) + 2)) & "</div>"
+    Else
+        BoldFirstWordDiv = "<div><b>" & EscapeHtml(txt) & "</b></div>"
+    End If
+End Function
+
+' Minimal HTML-escape for < & >
+Private Function EscapeHtml(s As String) As String
+    s = Replace(s, "&", "&amp;")
+    s = Replace(s, "<", "&lt;")
+    s = Replace(s, ">", "&gt;")
+    EscapeHtml = s
+End Function
